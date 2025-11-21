@@ -1,12 +1,18 @@
 import express, { Request, Response } from 'express';
 import cors from 'cors';
 import todoRoutes from './routes/todo.routes'; 
+import swaggerUi from 'swagger-ui-express';
+import YAML from 'yamljs';
+import path from 'path';
 
 const app = express();
 const PORT = 3000;
 
 app.use(cors());
 app.use(express.json());
+
+const swaggerDocument = YAML.load(path.join(__dirname, '../swagger.yaml'));
+app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerDocument));
 
 app.use('/api/todos', todoRoutes);
 
@@ -16,4 +22,5 @@ app.get('/', (req: Request, res: Response) => {
 
 app.listen(PORT, () => {
   console.log(`Server is running on http://localhost:${PORT}`);
+  console.log(`Swagger Docs available at http://localhost:${PORT}/api-docs`);
 });

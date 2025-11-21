@@ -1,0 +1,76 @@
+openapi: 3.0.0
+info:
+  title: Todo List API
+  description: 基于 Node.js + Express + Prisma 实现的待办事项管理 API
+  version: 1.0.0
+servers:
+  - url: http://localhost:3000/api
+paths:
+  /todos:
+    get:
+      summary: 获取任务列表
+      description: 支持分页、搜索和状态筛选
+      parameters:
+        - in: query
+          name: search
+          schema:
+            type: string
+          description: 搜索关键词 (匹配标题)
+        - in: query
+          name: isCompleted
+          schema:
+            type: boolean
+          description: 筛选完成状态
+      responses:
+        200:
+          description: 成功返回列表
+    post:
+      summary: 创建新任务
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - title
+              properties:
+                title:
+                  type: string
+                description:
+                  type: string
+      responses:
+        201:
+          description: 创建成功
+  /todos/{id}:
+    patch:
+      summary: 更新任务状态
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                isCompleted:
+                  type: boolean
+      responses:
+        200:
+          description: 更新成功
+    delete:
+      summary: 删除任务
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: string
+      responses:
+        200:
+          description: 删除成功
