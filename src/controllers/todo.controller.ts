@@ -5,11 +5,29 @@ const prisma = new PrismaClient();
 
 // 1. 获取所有任务
 export const getTodos = async (req: Request, res: Response) => {
+
+  console.log("🔍 收到查询参数:", req.query);
+  
   try {
+    const { search, isCompleted } = req.query;
+    const whereCondition: any = {};
+
+    if (search) {
+      whereCondition.title = {
+        contains: String(search), 
+      };
+    }
+
+    if (isCompleted) {
+      whereCondition.isCompleted = isCompleted === 'true';
+    }
+
     const todos = await prisma.todo.findMany({
+      where: whereCondition,         
       orderBy: { createdAt: 'desc' } 
     });
-    res.json(todos); 
+
+    res.json(todos);
   } catch (error) {
     res.status(500).json({ error: '获取任务列表失败' });
   }
