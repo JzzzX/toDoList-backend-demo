@@ -1,0 +1,32 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client"
+  output   = "../src/generated/prisma"
+}
+
+datasource db {
+  provider = "sqlite"
+}
+
+// 定义 Todo 表结构
+model Todo {
+  // 相当于 @Id @GeneratedValue
+  id          String   @id @default(uuid())
+  
+  // 相当于 String title;
+  title       String
+  
+  // 相当于 String description; (问号表示可为空，Nullable)
+  description String?
+  
+  // 相当于 boolean isCompleted = false;
+  isCompleted Boolean  @default(false)
+  
+  // 相当于 @CreatedDate
+  createdAt   DateTime @default(now())
+  
+  // 相当于 @LastModifiedDate
+  updatedAt   DateTime @updatedAt
+}
