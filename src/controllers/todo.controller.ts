@@ -37,3 +37,39 @@ export const createTodo = async (req: Request, res: Response) => {
     res.status(500).json({ error: '创建任务失败' }); 
   }
 };
+
+
+// 3. 更新任务 
+export const updateTodo = async (req: Request, res: Response) => {
+  try {
+    const { id } = req.params; 
+    const { isCompleted } = req.body; 
+
+    const updatedTodo = await prisma.todo.update({
+      where: { id }, 
+      data: {
+        isCompleted, 
+      },
+    });
+
+    res.json(updatedTodo);
+  } catch (error) {
+    // Prisma 如果找不到 ID 会抛错
+    res.status(500).json({ error: '更新失败，可能是ID不存在' });
+  }
+};
+
+// 4. 删除任务 
+export const deleteTodo = async (req: Request, res: Response) => {
+  try {
+    const { id } = req.params;
+
+    await prisma.todo.delete({
+      where: { id },
+    });
+
+    res.json({ message: '删除成功' });
+  } catch (error) {
+    res.status(500).json({ error: '删除失败' });
+  }
+};
