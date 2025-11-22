@@ -9,6 +9,7 @@ const prisma = new PrismaClient();
 const createTodoSchema = z.object({
   title: z.string().min(1, "标题不能为空"), 
   description: z.string().optional(),       
+  priority: z.number().int().min(1).max(3).optional(),
 });
 
 // 更新任务的规则
@@ -16,13 +17,14 @@ const updateTodoSchema = z.object({
   isCompleted: z.boolean().optional(),      
   title: z.string().min(1).optional(),
   description: z.string().optional(),
+  priority: z.number().int().min(1).max(3).optional(),
 });
 
 // --- Controller 函数 (不再需要 try-catch) ---
 
 // 1. 获取所有任务
 export const getTodos = async (req: Request, res: Response) => {
-  const { search, isCompleted } = req.query;
+  const { search, isCompleted, sort } = req.query;
   const whereCondition: any = {};
 
   if (search) {
@@ -32,9 +34,15 @@ export const getTodos = async (req: Request, res: Response) => {
     whereCondition.isCompleted = isCompleted === 'true';
   }
 
+  let orderBy: any = { createdAt: 'desc' };
+
+  if (sort === 'priority') {
+    orderBy = { priority: 'desc' };
+  }
+
   const todos = await prisma.todo.findMany({
     where: whereCondition,
-    orderBy: { createdAt: 'desc' }
+    orderBy: orderBy,
   });
 
   res.json(todos);
@@ -50,6 +58,7 @@ export const createTodo = async (req: Request, res: Response) => {
     data: {
       title: validatedData.title,
       description: validatedData.description,
+      priority: validatedData.priority,
     },
   });
   

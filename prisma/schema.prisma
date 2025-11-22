@@ -23,6 +23,9 @@ model Todo {
   
   // 相当于 boolean isCompleted = false;
   isCompleted Boolean  @default(false)
+
+  // 优先级 (1:低, 2:中, 3:高)。默认是 1 (普通任务)
+  priority    Int      @default(1)
   
   // 相当于 @CreatedDate
   createdAt   DateTime @default(now())
