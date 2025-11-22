@@ -1,93 +1,82 @@
 import { Request, Response } from 'express';
 import { PrismaClient } from '@prisma/client';
+import { z } from 'zod'; // 引入 zod
 
 const prisma = new PrismaClient();
 
+// --- 定义 Zod 校验规则 (Schema) ---
+// 创建任务的规则
+const createTodoSchema = z.object({
+  title: z.string().min(1, "标题不能为空"), 
+  description: z.string().optional(),       
+});
+
+// 更新任务的规则
+const updateTodoSchema = z.object({
+  isCompleted: z.boolean().optional(),      
+  title: z.string().min(1).optional(),
+  description: z.string().optional(),
+});
+
+// --- Controller 函数 (不再需要 try-catch) ---
+
 // 1. 获取所有任务
 export const getTodos = async (req: Request, res: Response) => {
+  const { search, isCompleted } = req.query;
+  const whereCondition: any = {};
 
-  console.log("🔍 收到查询参数:", req.query);
-  
-  try {
-    const { search, isCompleted } = req.query;
-    const whereCondition: any = {};
-
-    if (search) {
-      whereCondition.title = {
-        contains: String(search), 
-      };
-    }
-
-    if (isCompleted) {
-      whereCondition.isCompleted = isCompleted === 'true';
-    }
-
-    const todos = await prisma.todo.findMany({
-      where: whereCondition,         
-      orderBy: { createdAt: 'desc' } 
-    });
-
-    res.json(todos);
-  } catch (error) {
-    res.status(500).json({ error: '获取任务列表失败' });
+  if (search) {
+    whereCondition.title = { contains: String(search) };
   }
+  if (isCompleted) {
+    whereCondition.isCompleted = isCompleted === 'true';
+  }
+
+  const todos = await prisma.todo.findMany({
+    where: whereCondition,
+    orderBy: { createdAt: 'desc' }
+  });
+
+  res.json(todos);
 };
 
-// 2. 创建任务
+// 2. 创建任务 (使用 Zod 校验)
 export const createTodo = async (req: Request, res: Response) => {
-  try {
-    const { title, description } = req.body;
+  // Zod 校验：如果校验失败，会直接抛出错误，被全局异常处理捕获
+  // parse 成功后会返回类型安全的数据
+  const validatedData = createTodoSchema.parse(req.body);
 
-    if (!title) {
-      return res.status(400).json({ error: '标题不能为空' });
-    }
-
-    const newTodo = await prisma.todo.create({
-      data: {
-        title,
-        description, 
-      },
-    });
-    
-    res.status(201).json(newTodo); 
-  } catch (error) {
-    console.error("❌ 数据库操作失败:", error);
-    res.status(500).json({ error: '创建任务失败' }); 
-  }
+  const newTodo = await prisma.todo.create({
+    data: {
+      title: validatedData.title,
+      description: validatedData.description,
+    },
+  });
+  
+  res.status(201).json(newTodo);
 };
 
-
-// 3. 更新任务 
+// 3. 更新任务
 export const updateTodo = async (req: Request, res: Response) => {
-  try {
-    const { id } = req.params; 
-    const { isCompleted } = req.body; 
+  const { id } = req.params;
+  // Zod 校验
+  const validatedData = updateTodoSchema.parse(req.body);
 
-    const updatedTodo = await prisma.todo.update({
-      where: { id }, 
-      data: {
-        isCompleted, 
-      },
-    });
+  const updatedTodo = await prisma.todo.update({
+    where: { id },
+    data: validatedData, // 直接传校验过的数据
+  });
 
-    res.json(updatedTodo);
-  } catch (error) {
-    // Prisma 如果找不到 ID 会抛错
-    res.status(500).json({ error: '更新失败，可能是ID不存在' });
-  }
+  res.json(updatedTodo);
 };
 
-// 4. 删除任务 
+// 4. 删除任务
 export const deleteTodo = async (req: Request, res: Response) => {
-  try {
-    const { id } = req.params;
+  const { id } = req.params;
 
-    await prisma.todo.delete({
-      where: { id },
-    });
+  await prisma.todo.delete({
+    where: { id },
+  });
 
-    res.json({ message: '删除成功' });
-  } catch (error) {
-    res.status(500).json({ error: '删除失败' });
-  }
+  res.json({ message: '删除成功' });
 };
